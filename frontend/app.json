@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Smearch",
+    "slug": "Smearch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,25 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mma.business",
       "infoPlist": {
-        "CFBundleURLTypes": [
-          {
-            "CFBundleURLName": "mma.payment",
-            "CFBundleURLSchemes": [
-              "mma"
-            ],
-            "CFBundleURLRole": "Editor"
-          },
-          {
-            "CFBundleURLName": "mma.deeplink",
-            "CFBundleURLSchemes": [
-              "com.mma.business"
-            ],
-            "CFBundleURLRole": "Editor"
-          }
-        ],
-        "LSApplicationQueriesSchemes": [
-          "momo"
-        ]
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -39,29 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.mma.business",
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "data": [
-            {
-              "scheme": "mma"
-            },
-            {
-              "scheme": "com.mma.business"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        }
-      ],
-      "queries": {
-        "schemes": [
-          "momo"
-        ]
-      }
+      "package": "com.mma.business"
     },
     "web": {
       "bundler": "metro",

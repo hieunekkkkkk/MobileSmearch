@@ -9,21 +9,21 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
-        "EXPO_PUBLIC_BACKEND_URL": "http://192.168.100.175:3000"
+        "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
-        "EXPO_PUBLIC_BACKEND_URL": "http://192.168.100.175:3000"
+        "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
-        "EXPO_PUBLIC_BACKEND_URL": "http://192.168.100.175:3000"
+        "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
       }
     }
   },
