@@ -13,6 +13,7 @@ import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "@/utils/cache";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Toast from "react-native-toast-message";
+import { DeepLinkHandler } from "@/components/DeepLinkHanlder";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -54,6 +55,7 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
           </Stack>
+          <DeepLinkHandler />
           <StatusBar style="auto" />
           <Toast />
         </ThemeProvider>

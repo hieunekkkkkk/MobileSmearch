@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Switch,
+  ActivityIndicator,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
@@ -20,12 +21,39 @@ import Toast from "react-native-toast-message";
 
 export default function MyBusinessScreen() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const { fetchBusinessesByOwner, updateBusiness, loading, error } =
     useBusinessStore();
   const [myBusinesses, setMyBusinesses] = useState<Business[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [checkingRole, setCheckingRole] = useState(true);
 
+  // Force reload user data để đảm bảo có role mới nhất từ server
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (isLoaded && user) {
+        try {
+          setCheckingRole(true);
+          // Force reload user data từ Clerk server
+          await user.reload();
+          console.log("User data reloaded:", {
+            role: user.unsafeMetadata?.role,
+            subscription: user.unsafeMetadata?.subscription,
+          });
+        } catch (error) {
+          console.error("Failed to reload user data:", error);
+        } finally {
+          setCheckingRole(false);
+        }
+      } else {
+        setCheckingRole(false);
+      }
+    };
+
+    checkUserRole();
+  }, [isLoaded, user?.id]);
+
+  // Get real-time role từ Clerk (không cache)
   const userRole = user?.unsafeMetadata?.role as string;
   const subscription = user?.unsafeMetadata?.subscription as
     | { id?: number }
@@ -34,7 +62,7 @@ export default function MyBusinessScreen() {
   const canManageBusinesses = userRole === "owner" || userRole === "admin";
 
   const fetchMyBusinesses = async () => {
-    if (user?.id) {
+    if (user?.id && canManageBusinesses) {
       try {
         await fetchBusinessesByOwner(user.id);
         // Get businesses from store after fetching
@@ -48,14 +76,29 @@ export default function MyBusinessScreen() {
   };
 
   useEffect(() => {
-    if (canManageBusinesses) {
+    // Chỉ fetch businesses khi đã check xong role và user có quyền
+    if (!checkingRole && canManageBusinesses) {
       fetchMyBusinesses();
     }
-  }, [user?.id]);
+  }, [user?.id, canManageBusinesses, checkingRole]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchMyBusinesses();
+
+    // Reload user data trước khi fetch businesses
+    if (user) {
+      try {
+        await user.reload();
+      } catch (error) {
+        console.error("Failed to reload user during refresh:", error);
+      }
+    }
+
+    // Chỉ fetch nếu user có quyền
+    if (canManageBusinesses) {
+      await fetchMyBusinesses();
+    }
+
     setRefreshing(false);
   };
 
@@ -63,6 +106,17 @@ export default function MyBusinessScreen() {
     business: Business,
     newStatus: boolean
   ) => {
+    // Double check role trước khi thực hiện action
+    if (!canManageBusinesses) {
+      Toast.show({
+        type: "error",
+        text1: "Access Denied",
+        text2: "You don't have permission to manage businesses",
+        position: "top",
+      });
+      return;
+    }
+
     try {
       // Check if business should be open based on current time and opening hours
       const shouldBeOpen = business.openingHours
@@ -112,6 +166,17 @@ export default function MyBusinessScreen() {
   };
 
   const handleEditBusiness = (business: Business) => {
+    // Double check role trước khi navigate
+    if (!canManageBusinesses) {
+      Toast.show({
+        type: "error",
+        text1: "Access Denied",
+        text2: "You don't have permission to edit businesses",
+        position: "top",
+      });
+      return;
+    }
+
     // Navigate to add-business with edit mode
     router.push({
       pathname: "/(tabs)/add-business",
@@ -187,6 +252,23 @@ export default function MyBusinessScreen() {
     );
   };
 
+  // Show loading while checking role
+  if (!isLoaded || checkingRole) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Stack.Screen
+          options={{
+            title: "My Businesses",
+            headerBackTitle: "Back",
+          }}
+        />
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Checking permissions...</Text>
+      </View>
+    );
+  }
+
+  // Redirect to subscription if user is not owner/admin
   if (!canManageBusinesses) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -201,6 +283,10 @@ export default function MyBusinessScreen() {
         <Text style={styles.emptyTitle}>Access Restricted</Text>
         <Text style={styles.emptySubtitle}>
           Only business owners can access this section.
+        </Text>
+        <Text style={styles.currentRoleText}>
+          Current role:{" "}
+          <Text style={styles.roleHighlight}>{userRole || "client"}</Text>
         </Text>
         <TouchableOpacity
           style={styles.upgradeButton}
@@ -241,6 +327,20 @@ export default function MyBusinessScreen() {
             <Text style={styles.subtitle}>
               Managing as:{" "}
               {user.fullName || user.emailAddresses[0]?.emailAddress}
+            </Text>
+
+            {/* Role info để debug */}
+            <Text style={styles.roleInfo}>
+              Role: <Text style={styles.roleHighlight}>{userRole}</Text>
+              {currentSubscriptionId && (
+                <Text>
+                  {" "}
+                  | Plan:{" "}
+                  <Text style={styles.planHighlight}>
+                    {currentSubscriptionId}
+                  </Text>
+                </Text>
+              )}
             </Text>
 
             {/* Current Subscription Info */}
@@ -330,6 +430,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     marginTop: 4,
+  },
+  // New loading styles
+  loadingText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    marginTop: 12,
+  },
+  // Role info styles
+  roleInfo: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  roleHighlight: {
+    fontWeight: "600",
+    color: Colors.primary,
+    textTransform: "capitalize",
+  },
+  planHighlight: {
+    fontWeight: "600",
+    color: Colors.success,
+  },
+  currentRoleText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 8,
+    marginBottom: 16,
   },
   addButton: {
     marginRight: 16,
@@ -439,7 +567,7 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 16,
   },
-  // New styles for business controls
+  // Business controls styles
   businessContainer: {
     marginBottom: 16,
   },

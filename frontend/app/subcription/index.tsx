@@ -11,9 +11,34 @@ import { Stack, useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { Button } from "@/components/Button";
 import { Colors } from "@/constants/Colors";
-import { Check, CreditCard, Crown, Zap, Star } from "lucide-react-native";
+import {
+  Check,
+  CreditCard,
+  Crown,
+  Zap,
+  Star,
+  Wallet,
+  DollarSign,
+} from "lucide-react-native";
 import { momoPayment } from "@/services/MoMoPayment";
+import { payOSPayment } from "@/services/PayOSPayment";
 import Toast from "react-native-toast-message";
+
+// Payment methods
+const PAYMENT_METHODS = {
+  MOMO: {
+    id: "momo",
+    name: "MoMo E-Wallet",
+    icon: Wallet,
+    service: momoPayment,
+  },
+  PAYOS: {
+    id: "payos",
+    name: "PayOS Payment",
+    icon: DollarSign,
+    service: payOSPayment,
+  },
+};
 
 // 3 gói subscription cho owner role - sử dụng ID để so sánh level
 const SUBSCRIPTION_PLANS = {
@@ -33,7 +58,7 @@ const SUBSCRIPTION_PLANS = {
   PREMIUM: {
     id: 2,
     name: "Premium Owner",
-    price: 199000,
+    price: 19900,
     description: "Advanced features for growing businesses",
     features: [
       "Add up to 10 businesses",
@@ -65,6 +90,9 @@ export default function SubscriptionScreen() {
   const router = useRouter();
   const { user } = useUser();
   const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.BASIC.id);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
+    PAYMENT_METHODS.MOMO.id
+  );
   const [loading, setLoading] = useState(false);
 
   // Get current user role và subscription ID hiện tại
@@ -76,6 +104,10 @@ export default function SubscriptionScreen() {
 
   const handleSelectPlan = (planId: number) => {
     setSelectedPlan(planId);
+  };
+
+  const handleSelectPaymentMethod = (methodId: string) => {
+    setSelectedPaymentMethod(methodId);
   };
 
   const handleSubscribe = async () => {
@@ -166,9 +198,17 @@ export default function SubscriptionScreen() {
       }
 
       // Paid plans - proceed with payment
+      const selectedPaymentMethodData = Object.values(PAYMENT_METHODS).find(
+        (method) => method.id === selectedPaymentMethod
+      );
+
+      if (!selectedPaymentMethodData) {
+        throw new Error("Invalid payment method selected");
+      }
+
       const description = `Subscription ${selectedPlanData.name} - MMA Business`;
 
-      console.log("Starting MoMo Gateway payment...");
+      console.log(`Starting ${selectedPaymentMethodData.name} payment...`);
       console.log("Payment amount:", selectedPlanData.price);
       console.log("Payment description:", description);
       console.log("User ID:", user.id);
@@ -178,13 +218,13 @@ export default function SubscriptionScreen() {
       Toast.show({
         type: "info",
         text1: "Opening Payment Gateway",
-        text2: "Redirecting to MoMo payment...",
+        text2: `Redirecting to ${selectedPaymentMethodData.name}...`,
         position: "top",
         autoHide: false, // Keep showing until we update it
       });
 
-      // Call MoMo gateway payment - sẽ mở payURL ngay lập tức
-      const paymentResult = await momoPayment.pay(
+      // Call selected payment service
+      const paymentResult = await selectedPaymentMethodData.service.pay(
         selectedPlanData.price,
         description,
         user.id,
@@ -206,15 +246,15 @@ export default function SubscriptionScreen() {
               id: selectedPlan,
               startDate: new Date().toISOString(),
               status: "active",
-              paymentMethod: "momo_gateway",
-              orderId: paymentResult.orderId,
+              paymentMethod: selectedPaymentMethod,
+              orderId: paymentResult.orderId || paymentResult.orderCode,
             },
           },
         });
 
         await user.reload();
 
-        // Show success toast and redirect
+        // Show success toast and redirect to my-business
         Toast.show({
           type: "success",
           text1: "🎉 Payment Successful!",
@@ -222,17 +262,27 @@ export default function SubscriptionScreen() {
           position: "top",
           visibilityTime: 3000,
           onHide: () => {
-            // Redirect after toast hides
-            router.push("/(tabs)/add-business");
+            // Redirect to my-business instead of add-business
+            router.push("/(tabs)/my-business");
           },
         });
 
         // Backup redirect
         setTimeout(() => {
-          router.push("/(tabs)/add-business");
+          router.push("/(tabs)/my-business");
         }, 3500);
       } else {
-        // Payment failed - show error toast but don't redirect
+        // Payment failed - revert role to client
+        await user.update({
+          unsafeMetadata: {
+            ...user.unsafeMetadata,
+            role: "client",
+            subscription: null,
+          },
+        });
+        await user.reload();
+
+        // Show error toast and stay on subscription page
         Toast.show({
           type: "error",
           text1: "💳 Payment Failed",
@@ -338,6 +388,40 @@ export default function SubscriptionScreen() {
     );
   };
 
+  const renderPaymentMethodCard = (method: any, isSelected: boolean) => {
+    const IconComponent = method.icon;
+
+    return (
+      <TouchableOpacity
+        key={method.id}
+        style={[
+          styles.paymentMethodCard,
+          isSelected && styles.selectedPaymentMethodCard,
+        ]}
+        onPress={() => handleSelectPaymentMethod(method.id)}
+        activeOpacity={0.8}
+      >
+        <IconComponent
+          size={24}
+          color={isSelected ? Colors.white : Colors.primary}
+        />
+        <Text
+          style={[
+            styles.paymentMethodText,
+            isSelected && styles.selectedPaymentMethodText,
+          ]}
+        >
+          {method.name}
+        </Text>
+        {isSelected && <Check size={20} color={Colors.white} />}
+      </TouchableOpacity>
+    );
+  };
+
+  const selectedPlanData = Object.values(SUBSCRIPTION_PLANS).find(
+    (plan) => plan.id === selectedPlan
+  );
+
   return (
     <>
       <Stack.Screen
@@ -382,21 +466,25 @@ export default function SubscriptionScreen() {
         </View>
 
         <View style={styles.paymentContainer}>
-          <>
-            <Text style={styles.paymentTitle}>Payment Method</Text>
-            <View style={styles.paymentMethod}>
-              <CreditCard size={24} color={Colors.primary} />
-              <Text style={styles.paymentText}>MoMo E-Wallet</Text>
-            </View>
-          </>
+          {selectedPlanData && selectedPlanData.price > 0 && (
+            <>
+              <Text style={styles.paymentTitle}>Payment Method</Text>
+              <View style={styles.paymentMethodsContainer}>
+                {Object.values(PAYMENT_METHODS).map((method) =>
+                  renderPaymentMethodCard(
+                    method,
+                    selectedPaymentMethod === method.id
+                  )
+                )}
+              </View>
+            </>
+          )}
 
           <Button
             title={
               loading
                 ? "Processing..."
-                : Object.values(SUBSCRIPTION_PLANS).find(
-                    (p) => p.id === selectedPlan
-                  )?.price === 0
+                : selectedPlanData?.price === 0
                 ? "Get FREE Plan"
                 : currentRole === "owner"
                 ? "Upgrade Plan"
@@ -419,9 +507,7 @@ export default function SubscriptionScreen() {
           )}
 
           <Text style={styles.disclaimer}>
-            {Object.values(SUBSCRIPTION_PLANS).find(
-              (p) => p.id === selectedPlan
-            )?.price === 0
+            {selectedPlanData?.price === 0
               ? "You will get FREE access to business owner features."
               : `Payment will ${
                   currentRole === "owner"
@@ -437,6 +523,39 @@ export default function SubscriptionScreen() {
 
 const styles = StyleSheet.create({
   // ...existing styles...
+
+  // Payment method styles
+  paymentMethodsContainer: {
+    marginBottom: 24,
+  },
+  paymentMethodCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  selectedPaymentMethodCard: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  paymentMethodText: {
+    fontSize: 16,
+    color: Colors.text,
+    marginLeft: 12,
+    flex: 1,
+  },
+  selectedPaymentMethodText: {
+    color: Colors.white,
+  },
 
   // Add new styles for FREE plan
   freePlanCard: {
@@ -612,24 +731,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Colors.text,
     marginBottom: 16,
-  },
-  paymentMethod: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.white,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  paymentText: {
-    fontSize: 16,
-    color: Colors.text,
-    marginLeft: 12,
   },
   subscribeButton: {
     marginBottom: 16,

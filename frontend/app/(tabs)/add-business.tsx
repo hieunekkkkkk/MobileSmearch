@@ -29,6 +29,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Image as ExpoImage } from "expo-image";
 import Toast from "react-native-toast-message";
+import * as Location from "expo-location";
 
 const categories = [
   { id: "accommodation", label: "Hostel/Accommodation" },
@@ -306,6 +307,8 @@ export default function AddBusinessScreen() {
         isAvailable: product.isAvailable,
       }));
 
+      const result = await Location.geocodeAsync(address.trim());
+
       const businessData = {
         id: businessId!,
         ownerId: user.id,
@@ -317,8 +320,8 @@ export default function AddBusinessScreen() {
           isEditMode && selectedBusiness?.location
             ? selectedBusiness.location
             : {
-                latitude: 10.7769,
-                longitude: 106.7009,
+                latitude: result[0]?.latitude || 10.762622,
+                longitude: result[0]?.longitude || 106.660172,
               },
         phone: phone.trim(),
         openingHours: {
