@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
         "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
@@ -14,6 +17,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
         "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
@@ -21,6 +27,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
         "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"

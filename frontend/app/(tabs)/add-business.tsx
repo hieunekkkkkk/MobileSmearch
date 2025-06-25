@@ -16,9 +16,7 @@ import { Colors } from "@/constants/Colors";
 import { BusinessCategory } from "@/types";
 import {
   MapPin,
-  Clock,
   Phone,
-  Info,
   Camera,
   Plus,
   X,
@@ -99,7 +97,7 @@ export default function AddBusinessScreen() {
     if (isEditMode && editId) {
       fetchBusinessById(editId);
     }
-  }, [editId, isEditMode]);
+  }, [editId, isEditMode, fetchBusinessById]);
 
   // Populate form when business data is loaded
   useEffect(() => {
