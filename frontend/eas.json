@@ -11,7 +11,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubW9iaWxlLnNtZWFyY2guaW8udm4k",
         "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
       }
     },
@@ -21,7 +21,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubW9iaWxlLnNtZWFyY2guaW8udm4k",
         "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
       }
     },
@@ -31,7 +31,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3RpcnJpbmctc25ha2UtMzMuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsubW9iaWxlLnNtZWFyY2guaW8udm4k",
         "EXPO_PUBLIC_BACKEND_URL": "https://backend-mma.vercel.app"
       }
     }
