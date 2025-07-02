@@ -2,30 +2,39 @@
   "expo": {
     "name": "Smearch",
     "slug": "frontend",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "platforms": ["ios", "android", "web"],
     "icon": "./assets/images/icon.png",
-    "scheme": "mma",
+    "scheme": "mmaapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.smearch.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Smearch cần quyền truy cập camera để chụp ảnh và quét mã QR.",
         "NSMicrophoneUsageDescription": "Smearch cần quyền microphone để ghi âm video.",
-        "NSPhotoLibraryUsageDescription": "Smearch cần quyền truy cập thư viện ảnh để lưu và chọn ảnh."
+        "NSPhotoLibraryUsageDescription": "Smearch cần quyền truy cập thư viện ảnh để lưu và chọn ảnh.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "mmaapp",
+            "CFBundleURLSchemes": ["mmaapp"]
+          }
+        ]
       }
     },
     "android": {
       "package": "com.smearch.app",
-      "versionCode": 1,
+      "versionCode": 6,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -42,9 +51,7 @@
               "pathPrefix": "/sso-callback"
             },
             {
-              "scheme": "mma",
-              "host": "callback",
-              "pathPrefix": "/"
+              "scheme": "mmaapp"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -66,6 +73,20 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
+            "usesCleartextTraffic": true,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0"
+          }
+        }
       ]
     ],
     "experiments": {
@@ -76,7 +97,7 @@
       "eas": {
         "projectId": "0f6d9dac-8f86-4b47-93e4-d54b2029514a"
       },
-      "clerkPublishableKey": "pk_live_Y2xlcmsubW9iaWxlLnNtZWFyY2guaW8udm4k"
+      "clerkPublishableKey": "${process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}"
     },
     "owner": "hieunek2211"
   }

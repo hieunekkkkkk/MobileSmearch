@@ -18,7 +18,9 @@ export const useWarmUpBrowser = () => {
 WebBrowser.maybeCompleteAuthSession();
 
 const AuthScreen = () => {
+  useWarmUpBrowser();
   const insets = useSafeAreaInsets();
+
   return (
     <View
       style={[
@@ -27,15 +29,15 @@ const AuthScreen = () => {
       ]}
     >
       <View style={styles.headingContainer}>
-        <Text style={styles.label}>Login on App</Text>
+        <Text style={styles.label}>Login to Smearch</Text>
         <Text style={styles.description}>
           Start shopping with us by logging in to your account
         </Text>
       </View>
 
-      <View style={styles.socialButtonsContainer}>
-        <SocialLoginButton strategy="facebook" />
+      <View style={styles.socialContainer}>
         <SocialLoginButton strategy="google" />
+        <SocialLoginButton strategy="facebook" />
         <SocialLoginButton strategy="apple" />
       </View>
     </View>
@@ -47,25 +49,25 @@ export default AuthScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
     padding: 20,
-    gap: 20,
+    backgroundColor: "#fff",
   },
   headingContainer: {
-    width: "100%",
-    gap: 5,
+    marginBottom: 40,
   },
   label: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
   },
   description: {
     fontSize: 16,
-    color: "gray",
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
   },
-  socialButtonsContainer: {
-    width: "100%",
-    marginTop: 20,
-    gap: 10,
+  socialContainer: {
+    gap: 15,
   },
 });

@@ -1,6 +1,5 @@
 import { useOAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -8,7 +7,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import * as Linking from "expo-linking";
 import React, { useState } from "react";
 
 const SocialLoginButton = ({
@@ -30,8 +28,6 @@ const SocialLoginButton = ({
   const { startOAuthFlow } = useOAuth({ strategy: getStrategy() });
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
   const buttonText = () => {
     if (isLoading) {
       return "Loading...";
@@ -44,6 +40,8 @@ const SocialLoginButton = ({
     } else if (strategy === "apple") {
       return "Continue with Apple";
     }
+
+    return "Continue"; // Fix Text warning - always return a string
   };
 
   const buttonIcon = () => {
@@ -59,8 +57,12 @@ const SocialLoginButton = ({
   const onSocialLoginPress = React.useCallback(async () => {
     try {
       setIsLoading(true);
+
+      // Production URL để khớp với Clerk configuration
+      const redirectUrl = "mmaapp://callback";
+
       const { createdSessionId, setActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL("/dashboard", { scheme: "myapp" }),
+        redirectUrl: redirectUrl,
       });
 
       // If sign in was successful, set the active session
@@ -79,7 +81,7 @@ const SocialLoginButton = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [startOAuthFlow, user]);
 
   return (
     <TouchableOpacity
