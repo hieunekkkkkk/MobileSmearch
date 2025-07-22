@@ -15,6 +15,7 @@ export const useWarmUpBrowser = () => {
   }, []);
 };
 
+// Complete auth session to handle OAuth redirects properly
 WebBrowser.maybeCompleteAuthSession();
 
 const AuthScreen = () => {

@@ -18,7 +18,7 @@ interface FormData {
   full_name: string;
   username: string;
   gender: string;
-  role: string; // Thêm role
+  role: string;
 }
 
 const CompleteYourAccountScreen = () => {
@@ -32,7 +32,7 @@ const CompleteYourAccountScreen = () => {
       full_name: "",
       username: "",
       gender: "",
-      role: "client", // Default role
+      role: "client",
     },
   });
 
@@ -41,21 +41,38 @@ const CompleteYourAccountScreen = () => {
 
     try {
       setIsLoading(true);
+      console.log("Completing onboarding with data:", {
+        full_name,
+        username,
+        gender,
+        role,
+      });
+
       await user?.update({
         username,
         firstName: full_name.split(" ")[0],
         lastName: full_name.split(" ").slice(1).join(" ") || "",
         unsafeMetadata: {
+          ...user.unsafeMetadata,
           gender,
-          role, // Lưu role vào metadata
+          role,
           onboarding_completed: true,
         },
       });
 
       await user?.reload();
-      router.push("/(tabs)");
+      console.log("User updated successfully:", user?.unsafeMetadata);
+
+      // Thêm delay nhỏ trước khi navigate
+      setTimeout(() => {
+        router.replace("/(tabs)");
+      }, 500);
     } catch (error: any) {
-      if (error.message === "That username is taken. Please try another.") {
+      console.error("Error completing onboarding:", error);
+      if (
+        error.message?.includes("username is taken") ||
+        error.message?.includes("That username is taken")
+      ) {
         setError("username", { message: "Username is already taken" });
       } else {
         setError("full_name", { message: "An unexpected error occurred" });
@@ -72,7 +89,7 @@ const CompleteYourAccountScreen = () => {
       setValue("gender", String(user.unsafeMetadata?.gender) || "");
       setValue("role", String(user.unsafeMetadata?.role) || "client");
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, setValue]);
 
   return (
     <View

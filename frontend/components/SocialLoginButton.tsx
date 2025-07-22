@@ -6,8 +6,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import { checkNetworkConnectivity, retryWithBackoff } from "@/utils/network";
 
 const SocialLoginButton = ({
   strategy,
@@ -27,6 +30,7 @@ const SocialLoginButton = ({
 
   const { startOAuthFlow } = useOAuth({ strategy: getStrategy() });
   const { user } = useUser();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const buttonText = () => {
     if (isLoading) {
@@ -53,35 +57,158 @@ const SocialLoginButton = ({
       return <Ionicons name="logo-apple" size={24} color="black" />;
     }
   };
-
   const onSocialLoginPress = React.useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log("Starting OAuth flow for:", strategy);
 
-      // Production URL để khớp với Clerk configuration
-      const redirectUrl = "mmaapp://callback";
+      // Check network connectivity first
+      const networkInfo = await checkNetworkConnectivity();
+      console.log("Network status:", networkInfo);
 
-      const { createdSessionId, setActive } = await startOAuthFlow({
-        redirectUrl: redirectUrl,
+      // if (!networkInfo.isConnected) {
+      //   Alert.alert(
+      //     "Network Error",
+      //     "No internet connection. Please check your network settings and try again."
+      //   );
+      //   return;
+      // }
+
+      // if (!networkInfo.clerkApiReachable) {
+      //   console.warn("Clerk API not reachable, proceeding with fallback...");
+      // }
+
+      // Use retry mechanism for OAuth flow
+      const oauthResult = await retryWithBackoff(
+        async () => {
+          return await startOAuthFlow({
+            redirectUrl: "mmaapp://callback",
+          });
+        },
+        2,
+        1500
+      );
+
+      const { createdSessionId, setActive, signIn, signUp } = oauthResult;
+
+      console.log("OAuth flow result:", {
+        createdSessionId,
+        signInStatus: signIn?.status,
+        signUpStatus: signUp?.status,
       });
 
-      // If sign in was successful, set the active session
       if (createdSessionId) {
-        console.log("Session created", createdSessionId);
-        setActive!({ session: createdSessionId });
-        await user?.reload();
+        console.log("Session created:", createdSessionId);
+        await setActive!({ session: createdSessionId });
+
+        // Wait a bit for session to be fully established
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Reload user data multiple times with retries
+        let retryCount = 0;
+        const maxRetries = 8;
+        let currentUser = user;
+
+        while (retryCount < maxRetries && !currentUser) {
+          try {
+            await user?.reload();
+            currentUser = user;
+            console.log(
+              `User reload attempt ${retryCount + 1}:`,
+              currentUser?.unsafeMetadata
+            );
+
+            if (currentUser) break;
+
+            // Wait before retry
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            retryCount++;
+          } catch (error) {
+            console.log(
+              `User reload error on attempt ${retryCount + 1}:`,
+              error
+            );
+            retryCount++;
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        }
+
+        // Navigate based on onboarding status
+        if (currentUser?.unsafeMetadata?.onboarding_completed === true) {
+          console.log("User has completed onboarding, navigating to tabs");
+          router.replace("/(tabs)");
+        } else {
+          console.log("User needs to complete onboarding");
+          router.replace("/auth/complete-your-account");
+        }
       } else {
-        // Use signIn or signUp returned from startOAuthFlow
-        // for next steps, such as MFA
+        console.log("No session created, OAuth flow may need additional steps");
+        console.log("SignIn status:", signIn?.status);
+        console.log("SignUp status:", signUp?.status);
+
+        // This usually means OAuth is still in progress or was cancelled
+        if (signIn || signUp) {
+          console.log("OAuth flow continuing with additional steps...");
+          console.log("Deep link handler should process the callback...");
+        }
       }
-    } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+    } catch (err: any) {
+      console.error("OAuth error:", err);
+
+      // Enhanced error handling with network diagnostics
+      if (err?.message?.includes("Network request failed")) {
+        console.error("Network connectivity issue detected");
+
+        const networkInfo = await checkNetworkConnectivity();
+        if (!networkInfo.isConnected) {
+          Alert.alert(
+            "Connection Error",
+            "Unable to connect to the internet. Please check your network connection and try again."
+          );
+        } else if (!networkInfo.clerkApiReachable) {
+          Alert.alert(
+            "Service Unavailable",
+            "Authentication service is temporarily unavailable. Please try again in a few moments."
+          );
+        }
+      } else if (err?.message?.includes("toString")) {
+        console.error("Data parsing error - attempting retry...");
+        // Attempt a single retry after a delay
+        setTimeout(() => {
+          // Check if component is still mounted and not currently loading
+          setIsLoading(true);
+          onSocialLoginPress();
+        }, 2000);
+        return;
+      } else if (err.code === "oauth_access_denied") {
+        console.log("User denied OAuth access");
+        Alert.alert(
+          "Access Denied",
+          "You need to grant permission to continue with social login."
+        );
+      } else if (err.code === "oauth_callback_error") {
+        console.log("OAuth callback error");
+        Alert.alert(
+          "Login Error",
+          "There was an issue with the login process. Please try again."
+        );
+      } else if (err.message?.includes("redirect url")) {
+        console.log("Redirect URL mismatch - check Clerk dashboard settings");
+        Alert.alert(
+          "Configuration Error",
+          "There's a configuration issue. Please contact support."
+        );
+      } else {
+        // Generic error fallback
+        Alert.alert(
+          "Login Error",
+          "Something went wrong during login. Please try again or contact support if the issue persists."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [startOAuthFlow, user]);
+  }, [startOAuthFlow, user, router, strategy]);
 
   return (
     <TouchableOpacity

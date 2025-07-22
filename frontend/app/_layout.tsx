@@ -13,29 +13,7 @@ import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "@/utils/cache";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Toast from "react-native-toast-message";
-import { DeepLinkHandler } from "@/components/DeepLinkHanlder";
-import { ErrorBoundary } from "react-error-boundary";
-import { Text, View } from "react-native";
-
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-      }}
-    >
-      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
-        Something went wrong:
-      </Text>
-      <Text style={{ fontSize: 14, color: "red", textAlign: "center" }}>
-        {error.message}
-      </Text>
-    </View>
-  );
-}
+import { DeepLinkHandler } from "@/components/DeepLinkHandler";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -63,27 +41,26 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-        <ClerkLoaded>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-              <Stack.Screen name="business" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="subscription"
-                options={{ headerShown: false }}
-              />
-            </Stack>
-            <DeepLinkHandler />
-            <StatusBar style="auto" />
-            <Toast />
-          </ThemeProvider>
-        </ClerkLoaded>
-      </ClerkProvider>
-    </ErrorBoundary>
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <ClerkLoaded>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          {...({} as any)}
+        >
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="auth" options={{ headerShown: false }} />
+            <Stack.Screen name="business" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="subscription"
+              options={{ headerShown: false }}
+            />
+          </Stack>
+          <DeepLinkHandler />
+          <StatusBar style="auto" />
+          <Toast />
+        </ThemeProvider>
+      </ClerkLoaded>
+    </ClerkProvider>
   );
 }

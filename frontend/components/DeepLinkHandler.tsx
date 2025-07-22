@@ -12,10 +12,7 @@ export function DeepLinkHandler() {
     async (url: string) => {
       console.log("Deep link received:", url);
 
-      if (
-        url.includes("mmaapp://callback") ||
-        url.includes("oauth") 
-      ) {
+      if (url.includes("mmaapp://callback") || url.includes("oauth")) {
         console.log("OAuth callback received, waiting for user session...");
 
         // Wait for user session to be established

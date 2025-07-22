@@ -2,7 +2,7 @@
   "expo": {
     "name": "Smearch",
     "slug": "frontend",
-    "version": "1.0.2",
+    "version": "1.0.7",
     "orientation": "portrait",
     "platforms": ["ios", "android", "web"],
     "icon": "./assets/images/icon.png",
@@ -21,20 +21,24 @@
           {
             "CFBundleURLName": "mmaapp",
             "CFBundleURLSchemes": ["mmaapp"]
+          },
+          {
+            "CFBundleURLName": "com.smearch.app.auth",
+            "CFBundleURLSchemes": ["com.smearch.app"]
           }
         ]
       }
     },
     "android": {
       "package": "com.smearch.app",
-      "versionCode": 6,
+      "versionCode": 11,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -43,15 +47,22 @@
       "intentFilters": [
         {
           "action": "VIEW",
+          "data": [
+            {
+              "scheme": "mmaapp",
+              "host": "callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        },
+        {
+          "action": "VIEW",
           "autoVerify": true,
           "data": [
             {
               "scheme": "https",
               "host": "mobile.smearch.io.vn",
               "pathPrefix": "/sso-callback"
-            },
-            {
-              "scheme": "mmaapp"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -63,32 +74,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
-      ],
-      "expo-web-browser",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "enableProguardInReleaseBuilds": false,
-            "enableShrinkResourcesInReleaseBuilds": false,
-            "usesCleartextTraffic": true,
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0"
-          }
-        }
-      ]
-    ],
+    "plugins": ["expo-router", "expo-web-browser"],
     "experiments": {
       "typedRoutes": true
     },

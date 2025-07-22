@@ -12,16 +12,24 @@ export default function TabLayout() {
   const { user, isLoaded } = useUser();
   const { isSignedIn } = useAuth();
 
-  // Đợi cho đến khi user data được load
+  console.log("Tab Layout - isLoaded:", isLoaded);
+  console.log("Tab Layout - isSignedIn:", isSignedIn);
+  console.log(
+    "Tab Layout - onboarding_completed:",
+    user?.unsafeMetadata?.onboarding_completed
+  );
+
   if (!isLoaded) {
     return null;
   }
 
   if (!isSignedIn) {
+    console.log("Not signed in, redirecting to auth");
     return <Redirect href="/auth" />;
   }
 
   if (isSignedIn && user?.unsafeMetadata?.onboarding_completed !== true) {
+    console.log("Need to complete onboarding, redirecting");
     return <Redirect href="/auth/complete-your-account" />;
   }
 
@@ -70,8 +78,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <LayoutGrid size={size} color={color} />
           ),
-          // Hoàn toàn loại bỏ khỏi navigation nếu không phải owner
-          href: isOwner && !isAdmin ? "/my-business" : null,
+          // Only show for business owners
+          href: isOwner ? "/(tabs)/my-business" : null,
         }}
       />
 
@@ -82,8 +90,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <PlusCircle size={size} color={color} />
           ),
-          // Chỉ hiển thị cho owner, ẩn cho admin và client
-          href: !isOwner && !isAdmin ? "/add-business" : null,
+          // Show for clients (who can add businesses)
+          href: !isOwner && !isAdmin ? "/(tabs)/add-business" : null,
         }}
       />
 
@@ -94,7 +102,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <LayoutGrid size={size} color={color} />
           ),
-          href: isAdmin ? "/admin" : null,
+          // Only show for admins
+          href: isAdmin ? "/(tabs)/admin" : null,
         }}
       />
 
